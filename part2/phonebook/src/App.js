@@ -39,6 +39,18 @@ const Book = ({searchResult, erasePerson}) => {
   </div>)
 }
 
+const Notification = ({ message }) => {
+  if (message === null) {
+    return null
+  }
+
+  return (
+    <div className='error'>
+      {message}
+    </div>
+  )
+}
+
 // App Component
 
 const App = () => {
@@ -49,6 +61,8 @@ const App = () => {
   const [newNumber,setNewNumber] = useState('119')
 
   const [keyword, setKeyword] = useState("")
+
+  const [errorMessage, setErrorMessage] = useState('')
 
 // Get data from the server
   useEffect( () => {
@@ -65,8 +79,14 @@ const App = () => {
     phonebookService.create({name:newName , number:newNumber})
       .then( response => {
         setPersons(persons.concat(response))
+        setErrorMessage(
+          `Added ${newName}`
+        )
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
         setNewName("")
-        setNewNumber("") 
+        setNewNumber("")
       })
     
   }
@@ -79,7 +99,16 @@ const App = () => {
        {setPersons(persons.filter(x => {if(x.id !== id)return x
       else{return false}}))
        console.log(persons)}
-    )}
+    )
+    .catch(error => {
+      setErrorMessage(
+        `Information about ${newName} does not exist in the server`
+      )
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
+      setPersons(persons.filter(n => n.id !== id))
+    })}
   }
 
 
@@ -93,10 +122,21 @@ const App = () => {
     if (window.confirm(`${newName} is already added to the phonebook, change the old number to a new one ?`)){
       const contact = persons.find(n => n.id === idOnlyArr[alreadyExists])
       const updatedContact = { ...contact , number: newNumber }
+
       phonebookService.update(idOnlyArr[alreadyExists],updatedContact)
       .then(updated => {
-       setPersons(persons.map(person => person.id !== idOnlyArr[alreadyExists]? person : updatedContact ))
+       setPersons(persons.map(person => person.id !== idOnlyArr[alreadyExists]? person : updated ))
       })
+      .catch(error => {
+        setErrorMessage(
+          `Information about ${newName} does not exist in the server`
+        )
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
+        setPersons(persons.filter(n => n.id !== idOnlyArr[alreadyExists]))
+      })
+      
       return 1
     } // User wants to replace the number
     else{return 1} // Don't replace number 
@@ -137,6 +177,7 @@ const App = () => {
  
   return (
     <div>
+      <Notification message={errorMessage}/>
       <h2>Phonebook 📞</h2>
       <h3>Search 🔍</h3>
       <Search keyword={keyword} handleKeywordChange={handleKeywordChange}/>
