@@ -1,0 +1,9 @@
+Model.findOne({ name }, (err, doc) => {
+  if (err) {
+    console.log(err);
+  } else if (doc) {
+    console.log('A document with the same name already exists.');
+  } else {
+    console.log('No document found with the same name.');
+  }
+});
